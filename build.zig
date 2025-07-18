@@ -43,7 +43,11 @@ pub fn build(b: *std.Build) void {
     });
 
     engine_mod.addImport("gl", gl_bindings);
-    exe_mod.addImport("gl", gl_bindings);
+    exe_mod.addImport("gl", gl_bindings); // TODO: We might not need this
+
+    const zigimg_dep = b.dependency("zigimg", .{});
+
+    // engine_mod.addImport("zigimg", zigimg_dep.module("zigimg"));
 
     // Modules can depend on one another using the `std.Build.Module.addImport` function.
     // This is what allows Zig source code to use `@import("foo")` where 'foo' is not a
@@ -53,16 +57,18 @@ pub fn build(b: *std.Build) void {
     // Now, we will create a static library based on the module we created above.
     // This creates a `std.Build.Step.Compile`, which is the build step responsible
     // for actually invoking the compiler.
-    const glfw = b.addLibrary(.{
+    const engine = b.addLibrary(.{
         .linkage = .static,
         .name = "engine",
         .root_module = engine_mod,
     });
 
+    engine.root_module.addImport("zigimg", zigimg_dep.module("zigimg"));
+
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
-    b.installArtifact(glfw);
+    b.installArtifact(engine);
 
     // This creates another `std.Build.Step.Compile`, but this one builds an executable
     // rather than a static library.

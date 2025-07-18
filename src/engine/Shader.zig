@@ -101,7 +101,13 @@ pub fn delete(self: *Shader) void {
     gl.DeleteProgram(self.program_id);
 }
 
-pub fn uniform4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
+pub fn setInt(self: *Shader, uniform: []const u8, i: i32) void {
+    if (self.uniform_ids.get(uniform)) |id| {
+        gl.Uniform1i(id, i);
+    }
+}
+
+pub fn set4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.Uniform4f(
             id,

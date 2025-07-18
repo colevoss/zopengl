@@ -5,6 +5,7 @@ const engine = @import("engine");
 const Vertex = extern struct {
     pos: [3]f32,
     color: [3]f32,
+    tex: [2]f32,
 };
 
 pub fn main() !void {
@@ -30,18 +31,22 @@ pub fn main() !void {
         .{
             .pos = .{ 0.5, 0.5, 0.0 },
             .color = .{ 0, 0, 1 },
+            .tex = .{ 1, 1 },
         },
         .{
             .pos = .{ 0.5, -0.5, 0.0 },
             .color = .{ 0, 1, 0 },
+            .tex = .{ 1, 0 },
         },
         .{
             .pos = .{ -0.5, -0.5, 0.0 },
             .color = .{ 1, 0, 1 },
+            .tex = .{ 0, 0 },
         },
         .{
             .pos = .{ -0.5, 0.5, 0.0 },
             .color = .{ 1, 1, 0 },
+            .tex = .{ 0, 1 },
         },
     };
 
@@ -60,9 +65,16 @@ pub fn main() !void {
             .stride = @sizeOf(Vertex),
             .offset = @offsetOf(Vertex, "color"),
         },
+        .{
+            .name = "aTex",
+            .type = .Float,
+            .size = @typeInfo(@FieldType(Vertex, "tex")).array.len,
+            .stride = @sizeOf(Vertex),
+            .offset = @offsetOf(Vertex, "tex"),
+        },
     };
 
-    std.debug.print("{any}\n", .{attribs});
+    // std.debug.print("{any}\n", .{attribs});
 
     // const vertices = [_]f32{
     //     -0.5, -0.5, 0.0,
@@ -102,7 +114,23 @@ pub fn main() !void {
         .ebo = &ebo,
     };
 
-    var uniforms = [_][]const u8{"ourColor"};
+    var wall_texture = engine.Texture.init(allocator, .{
+        .path = "./resources/wall.jpg",
+        .type = .Texture2D,
+        .format = .Rgb,
+    });
+    try wall_texture.load();
+    defer wall_texture.delete();
+
+    var face_texture = engine.Texture.init(allocator, .{
+        .path = "./resources/awesomeface.png",
+        .type = .Texture2D,
+        .format = .Rgba,
+    });
+    try face_texture.load();
+    defer face_texture.delete();
+
+    var uniforms = [_][]const u8{ "texture1", "texture2" };
 
     var shader = engine.Shader.init(
         allocator,
@@ -112,7 +140,10 @@ pub fn main() !void {
         },
         vao,
         &uniforms,
+        // null,
     );
+
+    // std.debug.print("?? {any}\n", engine.Texture.ActiveTexture.Hello0);
 
     try shader.load();
     defer shader.deinit();
@@ -126,7 +157,15 @@ pub fn main() !void {
         }
 
         shader.use();
-        shader.uniform4f("ourColor", [4]f32{ 0, 1, 1, 0 });
+        shader.set4f("ourColor", [4]f32{ 0, 1, 1, 0 });
+        shader.setInt("texture1", 0);
+        shader.setInt("texture2", 1);
+
+        gl.ActiveTexture(engine.Texture.active(0));
+        wall_texture.bind();
+
+        gl.ActiveTexture(engine.Texture.active(1));
+        face_texture.bind();
 
         shader.vao.bind();
         // gl.DrawArrays(gl.TRIANGLES, 0, 3);
@@ -134,4 +173,7 @@ pub fn main() !void {
 
         eng.endFrame();
     }
+
+    const err = gl.GetError();
+    std.debug.print("gl err {d}\n", .{err});
 }
