@@ -54,7 +54,7 @@ pub fn load(self: *Shader) !void {
 
     var vertex_source: ShaderSource = .{
         .path = self.opts.vertexPath,
-        .type = .Vertex,
+        .type = .vertex,
     };
 
     try vertex_source.load(aa);
@@ -62,7 +62,7 @@ pub fn load(self: *Shader) !void {
 
     var fragment_source: ShaderSource = .{
         .path = self.opts.fragmentPath,
-        .type = .Fragment,
+        .type = .fragment,
     };
 
     try fragment_source.load(aa);
@@ -148,16 +148,16 @@ fn loadUniforms(self: *Shader, arena: Allocator) !void {
 }
 
 pub const BufferBindingTarget = enum {
-    Array, // Vertex attributes
-    CopyRead, // Buffer copy source
-    CopyWrite, // Buffer copy destination
-    DrawIndirect, // Indirect command arguments
-    ElementArray, // Vertex array indices
-    PixelPack, // Pixel read target
-    PixelUnpack, // Texture data source
-    Texture, // Texture data buffer
-    TransformFeedback, // Transform feedback buffer
-    Uniform, // Uniform block storage
+    array, // Vertex attributes
+    copy_read, // Buffer copy source
+    copy_write, // Buffer copy destination
+    draw_indirect, // Indirect command arguments
+    element_array, // Vertex array indices
+    pixel_pack, // Pixel read target
+    pixel_unpack, // Texture data source
+    texture, // Texture data buffer
+    transform_feedback, // Transform feedback buffer
+    uniform, // Uniform block storage
     // AtomicCounter, // Atomic counter storage
     // DispatchIndirect, // Indirect compute dispatch commands
     // Query, // Query result buffer
@@ -165,16 +165,16 @@ pub const BufferBindingTarget = enum {
 
     pub fn glType(self: BufferBindingTarget) c_uint {
         return switch (self) {
-            .Array => gl.ARRAY_BUFFER,
-            .CopyRead => gl.COPY_READ_BUFFER,
-            .CopyWrite => gl.COPY_WRITE_BUFFER,
-            .DrawIndirect => gl.DRAW_INDIRECT_BUFFER,
-            .ElementArray => gl.ELEMENT_ARRAY_BUFFER,
-            .PixelPack => gl.PIXEL_PACK_BUFFER,
-            .PixelUnpack => gl.PIXEL_UNPACK_BUFFER,
-            .Texture => gl.TEXTURE_BUFFER,
-            .TransformFeedback => gl.TRANSFORM_FEEDBACK_BUFFER,
-            .Uniform => gl.UNIFORM_BUFFER,
+            .array => gl.ARRAY_BUFFER,
+            .copy_read => gl.COPY_READ_BUFFER,
+            .copy_write => gl.COPY_WRITE_BUFFER,
+            .draw_indirect => gl.DRAW_INDIRECT_BUFFER,
+            .element_array => gl.ELEMENT_ARRAY_BUFFER,
+            .pixel_pack => gl.PIXEL_PACK_BUFFER,
+            .pixel_unpack => gl.PIXEL_UNPACK_BUFFER,
+            .texture => gl.TEXTURE_BUFFER,
+            .transform_feedback => gl.TRANSFORM_FEEDBACK_BUFFER,
+            .uniform => gl.UNIFORM_BUFFER,
             // .AtomicCounter => gl.ATOMIC_COUNTER_BUFFER,
             // .DispatchIndirect => gl.DISPATCH_INDIRECT_BUFFER,
             // .Query => gl.QUERY_BUFFER,
@@ -184,27 +184,27 @@ pub const BufferBindingTarget = enum {
 };
 
 pub const BufferUsage = enum {
-    StreamDraw,
-    StreamRead,
-    StreamCopy,
-    StaticDraw,
-    StaticRead,
-    StaticCopy,
-    DynamicDraw,
-    DynamicRead,
-    DynamicCopy,
+    stream_draw,
+    stream_read,
+    stream_copy,
+    static_draw,
+    static_read,
+    static_copy,
+    dynamic_draw,
+    dynamic_read,
+    dynamic_copy,
 
     pub fn glType(self: BufferUsage) c_uint {
         return switch (self) {
-            .StreamDraw => gl.STREAM_DRAW,
-            .StreamRead => gl.STREAM_READ,
-            .StreamCopy => gl.STREAM_COPY,
-            .StaticDraw => gl.STATIC_DRAW,
-            .StaticRead => gl.STATIC_READ,
-            .StaticCopy => gl.STATIC_COPY,
-            .DynamicDraw => gl.DYNAMIC_DRAW,
-            .DynamicRead => gl.DYNAMIC_READ,
-            .DynamicCopy => gl.DYNAMIC_COPY,
+            .stream_draw => gl.STREAM_DRAW,
+            .stream_read => gl.STREAM_READ,
+            .stream_copy => gl.STREAM_COPY,
+            .static_draw => gl.STATIC_DRAW,
+            .static_read => gl.STATIC_READ,
+            .static_copy => gl.STATIC_COPY,
+            .dynamic_draw => gl.DYNAMIC_DRAW,
+            .dynamic_read => gl.DYNAMIC_READ,
+            .dynamic_copy => gl.DYNAMIC_COPY,
         };
     }
 };
@@ -217,27 +217,27 @@ pub const BufferInformation = struct {
 };
 
 pub const VertexAttribType = enum {
-    Byte,
-    UByte,
-    Short,
-    UShort,
-    Int,
-    UInt,
-    Float,
-    Double,
-    Fixed,
+    byte,
+    u_byte,
+    short,
+    u_short,
+    int,
+    u_int,
+    float,
+    double,
+    fixed,
 
     pub fn glType(self: VertexAttribType) c_uint {
         return switch (self) {
-            .Byte => gl.BYTE,
-            .UByte => gl.UNSIGNED_BYTE,
-            .Short => gl.SHORT,
-            .UShort => gl.UNSIGNED_SHORT,
-            .Int => gl.INT,
-            .UInt => gl.UNSIGNED_INT,
-            .Float => gl.FLOAT,
-            .Double => gl.DOUBLE,
-            .Fixed => gl.FIXED,
+            .byte => gl.BYTE,
+            .u_byte => gl.UNSIGNED_BYTE,
+            .short => gl.SHORT,
+            .u_short => gl.UNSIGNED_SHORT,
+            .int => gl.INT,
+            .u_int => gl.UNSIGNED_INT,
+            .float => gl.FLOAT,
+            .double => gl.DOUBLE,
+            .fixed => gl.FIXED,
         };
     }
 };
@@ -353,13 +353,13 @@ pub const ShaderSource = struct {
     shader_id: u32 = undefined,
 
     pub const Type = enum {
-        Vertex,
-        Fragment,
+        vertex,
+        fragment,
 
         pub fn glType(self: Type) c_uint {
             return switch (self) {
-                .Vertex => gl.VERTEX_SHADER,
-                .Fragment => gl.FRAGMENT_SHADER,
+                .vertex => gl.VERTEX_SHADER,
+                .fragment => gl.FRAGMENT_SHADER,
             };
         }
     };

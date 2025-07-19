@@ -3,7 +3,7 @@ const err = @import("error.zig");
 const gl = @import("gl");
 const glfw = @import("glfw.zig");
 const c = @import("c.zig").c;
-const Key = @import("key.zig").Key;
+const keys = @import("keys.zig");
 
 const log = std.log.scoped(.engine);
 const Engine = @This();
@@ -47,8 +47,16 @@ pub fn createWindow(self: *Engine, opts: CreateWindowOptions) Error!void {
     gl.Enable(gl.DEPTH_TEST);
 }
 
-pub fn key(self: *Engine, k: Key) bool {
-    return glfw.getKey(self.window, k);
+pub fn key(self: *Engine, k: keys.Key, action: keys.Action) bool {
+    return glfw.getKey(self.window, k, action);
+}
+
+pub fn keyPressed(self: *Engine, k: keys.Key) bool {
+    return self.key(k, .pressed);
+}
+
+pub fn keyReleased(self: *Engine, k: keys.Key) bool {
+    return self.key(k, .released);
 }
 
 pub fn start(self: *Engine) void {

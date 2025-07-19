@@ -13,11 +13,11 @@ pub const Opts = struct {
     path: []const u8,
     type: Target,
     format: Format,
-    s_wrap: Wrapping = .Repeat,
-    t_wrap: Wrapping = .Repeat,
+    s_wrap: Wrapping = .repeat,
+    t_wrap: Wrapping = .repeat,
 
-    min_filter: Filtering = .LienarMipMapLinear,
-    mag_filter: Filtering = .Linear,
+    min_filter: Filtering = .lienar_mip_map_linear,
+    mag_filter: Filtering = .linear,
 };
 
 pub fn init(allocator: Allocator, opts: Opts) Texture {
@@ -43,10 +43,10 @@ pub fn load(self: *Texture) !void {
     self.bind();
     const tex_type = self.opts.type.glType();
 
-    gl.TexParameteri(tex_type, WrappingParam.S.glType(), self.opts.s_wrap.glType());
-    gl.TexParameteri(tex_type, WrappingParam.T.glType(), self.opts.t_wrap.glType());
-    gl.TexParameteri(tex_type, FilterParam.Min.glType(), self.opts.min_filter.glType());
-    gl.TexParameteri(tex_type, FilterParam.Mag.glType(), self.opts.mag_filter.glType());
+    gl.TexParameteri(tex_type, WrappingParam.s.glType(), self.opts.s_wrap.glType());
+    gl.TexParameteri(tex_type, WrappingParam.t.glType(), self.opts.t_wrap.glType());
+    gl.TexParameteri(tex_type, FilterParam.min.glType(), self.opts.min_filter.glType());
+    gl.TexParameteri(tex_type, FilterParam.mag.glType(), self.opts.mag_filter.glType());
 
     var file = try std.fs.cwd().openFile(self.opts.path, .{});
     defer file.close();
@@ -78,7 +78,7 @@ pub fn delete(self: *Texture) void {
 }
 
 pub const Target = enum {
-    Texture2D,
+    texture_2d,
     // Texture1DArray,
     // Texture2DArray,
     // Texture2DMultisample,
@@ -90,7 +90,7 @@ pub const Target = enum {
 
     pub inline fn glType(self: Target) c_uint {
         return switch (self) {
-            .Texture2D => gl.TEXTURE_2D,
+            .texture_2d => gl.TEXTURE_2D,
             // .Texture1DArray => gl.TEXTURE_1D_ARRAY,
             // .Texture2DArray => gl.TEXTURE_2D_ARRAY,
             // .Texture2DMultisample => gl.TEXTURE_2D_MULTISAMPLE,
@@ -104,104 +104,104 @@ pub const Target = enum {
 };
 
 pub const WrappingParam = enum {
-    S,
-    T,
-    R,
+    s,
+    t,
+    r,
 
     pub inline fn glType(self: WrappingParam) c_uint {
         return switch (self) {
-            .S => gl.TEXTURE_WRAP_S,
-            .T => gl.TEXTURE_WRAP_T,
-            .R => gl.TEXTURE_WRAP_R,
+            .s => gl.TEXTURE_WRAP_S,
+            .t => gl.TEXTURE_WRAP_T,
+            .r => gl.TEXTURE_WRAP_R,
         };
     }
 };
 
 pub const Wrapping = enum {
-    Repeat,
-    MirroredRepeat,
-    ClampToEdge,
-    ClampToBorder,
+    repeat,
+    mirrored_repeat,
+    clamp_to_edge,
+    clamp_to_border,
 
     pub inline fn glType(self: Wrapping) c_int {
         return switch (self) {
-            .Repeat => gl.REPEAT,
-            .MirroredRepeat => gl.MIRRORED_REPEAT,
-            .ClampToEdge => gl.CLAMP_TO_EDGE,
-            .ClampToBorder => gl.CLAMP_TO_BORDER,
+            .repeat => gl.REPEAT,
+            .mirrored_repeat => gl.MIRRORED_REPEAT,
+            .clamp_to_edge => gl.CLAMP_TO_EDGE,
+            .clamp_to_border => gl.CLAMP_TO_BORDER,
         };
     }
 };
 
 pub const FilterParam = enum {
-    Min,
-    Mag,
+    min,
+    mag,
 
     pub inline fn glType(self: FilterParam) c_uint {
         return switch (self) {
-            .Min => gl.TEXTURE_MIN_FILTER,
-            .Mag => gl.TEXTURE_MAG_FILTER,
+            .min => gl.TEXTURE_MIN_FILTER,
+            .mag => gl.TEXTURE_MAG_FILTER,
         };
     }
 };
 
 pub const Filtering = enum {
-    Nearest,
-    Linear,
+    nearest,
+    linear,
 
     // mipmaps
-    NearestMipMapNearest,
-    LinearMipMapNearest,
-    NearestMipMapLinear,
-    LienarMipMapLinear,
+    nearest_mip_map_nearest,
+    linear_mip_map_nearest,
+    nearest_mip_map_linear,
+    lienar_mip_map_linear,
 
     pub inline fn glType(self: Filtering) c_int {
         return switch (self) {
-            .Nearest => gl.NEAREST,
-            .Linear => gl.LINEAR,
+            .nearest => gl.NEAREST,
+            .linear => gl.LINEAR,
 
-            .NearestMipMapNearest => gl.NEAREST_MIPMAP_NEAREST,
-            .LinearMipMapNearest => gl.LINEAR_MIPMAP_NEAREST,
-            .NearestMipMapLinear => gl.NEAREST_MIPMAP_LINEAR,
-            .LienarMipMapLinear => gl.LINEAR_MIPMAP_LINEAR,
+            .nearest_mip_map_nearest => gl.NEAREST_MIPMAP_NEAREST,
+            .linear_mip_map_nearest => gl.LINEAR_MIPMAP_NEAREST,
+            .nearest_mip_map_linear => gl.NEAREST_MIPMAP_LINEAR,
+            .lienar_mip_map_linear => gl.LINEAR_MIPMAP_LINEAR,
         };
     }
 };
 
 pub const Format = enum {
-    Red,
-    Rg,
-    Rgb,
-    Bgr,
-    Rgba,
-    Bgra,
-    RedInteger,
-    RgInteger,
-    RgbInteger,
-    BgrInteger,
-    RgbaInteger,
-    BgraInteger,
-    StencilIndex,
-    DepthComponent,
-    DepthStencil,
+    red,
+    rg,
+    rgb,
+    bgr,
+    rgba,
+    bgra,
+    red_integer,
+    rg_integer,
+    rgb_integer,
+    bgr_integer,
+    rgba_integer,
+    bgra_integer,
+    stencil_index,
+    depth_component,
+    depth_stencil,
 
     pub inline fn glType(self: Format) c_uint {
         return switch (self) {
-            .Red => gl.RED,
-            .Rg => gl.RG,
-            .Rgb => gl.RGB,
-            .Bgr => gl.BGR,
-            .Rgba => gl.RGBA,
-            .Bgra => gl.BGRA,
-            .RedInteger => gl.RED_INTEGER,
-            .RgInteger => gl.RG_INTEGER,
-            .RgbInteger => gl.RGB_INTEGER,
-            .BgrInteger => gl.BGR_INTEGER,
-            .RgbaInteger => gl.RGBA_INTEGER,
-            .BgraInteger => gl.BGRA_INTEGER,
-            .StencilIndex => gl.STENCIL_INDEX,
-            .DepthComponent => gl.DEPTH_COMPONENT,
-            .DepthStencil => gl.DEPTH_STENCIL,
+            .red => gl.RED,
+            .rg => gl.RG,
+            .rgb => gl.RGB,
+            .bgr => gl.BGR,
+            .rgba => gl.RGBA,
+            .bgra => gl.BGRA,
+            .red_integer => gl.RED_INTEGER,
+            .rg_integer => gl.RG_INTEGER,
+            .rgb_integer => gl.RGB_INTEGER,
+            .bgr_integer => gl.BGR_INTEGER,
+            .rgba_integer => gl.RGBA_INTEGER,
+            .bgra_integer => gl.BGRA_INTEGER,
+            .stencil_index => gl.STENCIL_INDEX,
+            .depth_component => gl.DEPTH_COMPONENT,
+            .depth_stencil => gl.DEPTH_STENCIL,
         };
     }
 };

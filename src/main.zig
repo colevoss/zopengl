@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const gl = @import("gl");
 const engine = @import("engine");
 const verts = @import("verts.zig");
@@ -16,11 +17,25 @@ const math = @import("zmath");
 const WIDTH = 800;
 const HEIGHT = 600;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
+var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
-    defer _ = gpa.deinit();
+pub fn main() !void {
+    // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    // var gpa: std.heap.DebugAllocator(.{}) = .init;
+    // const allocator = gpa.allocator();
+
+    const allocator, const is_debug = gpa: {
+        // if (native_os == .wasi) break :gpa .{ std.heap.wasm_allocator, false };
+        break :gpa switch (builtin.mode) {
+            .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
+            .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
+        };
+    };
+
+    defer if (is_debug) {
+        _ = debug_allocator.deinit();
+    };
+    // defer _ = gpa.deinit();
 
     var eng: engine.Engine = .{};
 
@@ -61,7 +76,7 @@ pub fn main() !void {
     var attribs = [_]engine.Shader.VertexAttribute{
         .{
             .name = "aPos",
-            .type = .Float,
+            .type = .float,
             .size = @typeInfo(@FieldType(Vertex, "pos")).array.len,
             .stride = @sizeOf(Vertex),
             .offset = @offsetOf(Vertex, "pos"),
@@ -75,7 +90,7 @@ pub fn main() !void {
         // },
         .{
             .name = "aTex",
-            .type = .Float,
+            .type = .float,
             .size = @typeInfo(@FieldType(Vertex, "tex")).array.len,
             .stride = @sizeOf(Vertex),
             .offset = @offsetOf(Vertex, "tex"),
@@ -103,37 +118,37 @@ pub fn main() !void {
     };
 
     var ebo: engine.Shader.Vbo = .{
-        .type = .ElementArray,
+        .type = .element_array,
         .size = @sizeOf(@TypeOf(indices)),
         .data = &indices,
-        .usage = .StaticDraw,
+        .usage = .static_draw,
     };
 
     const vao: engine.Shader.Vao = .{
         .attributes = &attribs,
         .vbo = .{
-            .type = .Array,
+            .type = .array,
             // .size = @sizeOf(@TypeOf(vertices)),
             .size = @sizeOf(@TypeOf(v)),
             // .data = &vertices,
             .data = &v,
-            .usage = .StaticDraw,
+            .usage = .static_draw,
         },
         .ebo = &ebo,
     };
 
     var wall_texture = engine.Texture.init(allocator, .{
         .path = "./resources/wall.jpg",
-        .type = .Texture2D,
-        .format = .Rgb,
+        .type = .texture_2d,
+        .format = .rgb,
     });
     try wall_texture.load();
     defer wall_texture.delete();
 
     var face_texture = engine.Texture.init(allocator, .{
         .path = "./resources/awesomeface.png",
-        .type = .Texture2D,
-        .format = .Rgba,
+        .type = .texture_2d,
+        .format = .rgba,
     });
     try face_texture.load();
     defer face_texture.delete();
@@ -186,23 +201,23 @@ pub fn main() !void {
 
         const camera_speed = math.f32x4s(2.5 * eng.deltaTime);
 
-        if (eng.key(engine.Key.Esc)) {
+        if (eng.keyPressed(.esc)) {
             break;
         }
 
-        if (eng.key(.W)) {
+        if (eng.keyPressed(.w)) {
             camera_pos += camera_speed * camera_front;
         }
 
-        if (eng.key(.S)) {
+        if (eng.keyPressed(.s)) {
             camera_pos -= camera_speed * camera_front;
         }
 
-        if (eng.key(.A)) {
+        if (eng.keyPressed(.a)) {
             camera_pos -= math.normalize3(math.cross3(camera_front, up)) * camera_speed;
         }
 
-        if (eng.key(.D)) {
+        if (eng.keyPressed(.d)) {
             camera_pos += math.normalize3(math.cross3(camera_front, up)) * camera_speed;
         }
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig").c;
 const err = @import("error.zig");
-const Key = @import("key.zig").Key;
+const keys = @import("keys.zig");
 
 pub const Window = c.GLFWwindow;
 
@@ -49,8 +49,9 @@ pub fn createWindow(opts: CreateWindowOptions) err.GLFWError!?*Window {
     try checkError();
     unreachable;
 }
-pub fn getKey(window: ?*Window, key: Key) bool {
-    return boolean(c.glfwGetKey(window, key.toCInt()));
+
+pub fn getKey(window: ?*Window, k: keys.Key, action: keys.Action) bool {
+    return c.glfwGetKey(window, k.glfw()) == action.glfw();
 }
 
 pub const FrameBufferCallback = fn (?*Window, i32, i32) void;
