@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const gl = @import("gl");
 const opengl = @import("opengl.zig");
+const math = @import("zmath");
 
 const log = std.log.scoped(.shader);
 
@@ -115,6 +116,17 @@ pub fn set4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
             values[1],
             values[2],
             values[3],
+        );
+    }
+}
+
+pub fn setMat4(self: *Shader, uniform: []const u8, mat: math.Mat) void {
+    if (self.uniform_ids.get(uniform)) |id| {
+        gl.UniformMatrix4fv(
+            id,
+            1,
+            gl.FALSE,
+            math.arrNPtr(&mat),
         );
     }
 }

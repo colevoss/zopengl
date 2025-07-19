@@ -54,6 +54,8 @@ pub fn build(b: *std.Build) void {
     // file path. In this case, we set up `exe_mod` to import `lib_mod`.
     exe_mod.addImport("engine", engine_mod);
 
+    const zmath = b.dependency("zmath", .{});
+
     // Now, we will create a static library based on the module we created above.
     // This creates a `std.Build.Step.Compile`, which is the build step responsible
     // for actually invoking the compiler.
@@ -64,6 +66,7 @@ pub fn build(b: *std.Build) void {
     });
 
     engine.root_module.addImport("zigimg", zigimg_dep.module("zigimg"));
+    engine.root_module.addImport("zmath", zmath.module("root"));
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
@@ -76,6 +79,7 @@ pub fn build(b: *std.Build) void {
         .name = "zig_opengl",
         .root_module = exe_mod,
     });
+    exe.root_module.addImport("zmath", zmath.module("root"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default

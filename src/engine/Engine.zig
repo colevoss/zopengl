@@ -16,12 +16,16 @@ pub const EngineError = error{
 
 pub const Error = err.GLFWError || EngineError;
 
+lastTime: f32 = 0,
+deltaTime: f32 = 0,
+
 procs: gl.ProcTable = undefined,
 window: *glfw.Window = undefined,
 
 pub fn init(self: *Engine, opts: CreateWindowOptions) Error!void {
     try glfw.init();
     glfw.setErrorCallback(errorCallback);
+
     try self.createWindow(opts);
 }
 
@@ -40,19 +44,35 @@ pub fn createWindow(self: *Engine, opts: CreateWindowOptions) Error!void {
     }
 
     gl.makeProcTableCurrent(&self.procs);
+    gl.Enable(gl.DEPTH_TEST);
 }
 
 pub fn key(self: *Engine, k: Key) bool {
     return glfw.getKey(self.window, k);
 }
 
+pub fn start(self: *Engine) void {
+    self.lastTime = self.getTime();
+}
+
 pub fn run(self: *Engine) bool {
     return !glfw.windowShouldClose(self.window);
 }
 
+pub fn startFrame(self: *Engine) void {
+    c.glfwPollEvents();
+
+    const now = self.getTime();
+    self.deltaTime = now - self.lastTime;
+    self.lastTime = now;
+}
+
 pub fn endFrame(self: *Engine) void {
     c.glfwSwapBuffers(self.window);
-    c.glfwPollEvents();
+}
+
+pub inline fn getTime(_: *Engine) f32 {
+    return glfw.getTime();
 }
 
 fn framebufferSizeCallback(_: ?*glfw.Window, width: i32, height: i32) void {

@@ -44,6 +44,10 @@
             .url = "git+https://github.com/zigimg/zigimg.git#31bd433201d12d6aa700074d751a7db4555cdb0d",
             .hash = "zigimg-0.1.0-8_eo2qClEgC8dTSiSO6vqGe7mdtIkobGi-Uc4d0Eo7_2",
         },
+        .zmath = .{
+            .url = "git+https://github.com/zig-gamedev/zmath.git#5128dc8a8068aab398f844c1f5fddc8132310146",
+            .hash = "zmath-0.11.0-dev-wjwivU8rAwD9kF3KJhflcYp2SNvx18L_r1XJc17J5nzd",
+        },
     },
     .paths = .{
         "build.zig",

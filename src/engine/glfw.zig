@@ -42,13 +42,13 @@ pub fn createWindow(opts: CreateWindowOptions) err.GLFWError!?*Window {
 
     if (window) |w| {
         try makeContextCurrent(w);
+        c.glfwSwapInterval(0);
         return w;
     }
 
     try checkError();
     unreachable;
 }
-
 pub fn getKey(window: ?*Window, key: Key) bool {
     return boolean(c.glfwGetKey(window, key.toCInt()));
 }
@@ -60,6 +60,10 @@ var frameBufferCallback: *const FrameBufferCallback = undefined;
 pub fn setFramebufferSizeCallback(window: ?*Window, cb: FrameBufferCallback) void {
     frameBufferCallback = cb;
     _ = c.glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
+}
+
+pub inline fn getTime() f32 {
+    return @floatCast(c.glfwGetTime());
 }
 
 fn frameBufferSizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.c) void {
