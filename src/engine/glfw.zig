@@ -43,11 +43,16 @@ pub fn createWindow(opts: CreateWindowOptions) err.GLFWError!?*Window {
     if (window) |w| {
         try makeContextCurrent(w);
         c.glfwSwapInterval(0);
+        c.glfwSetInputMode(w, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
         return w;
     }
 
     try checkError();
     unreachable;
+}
+
+pub inline fn getTime() f32 {
+    return @floatCast(c.glfwGetTime());
 }
 
 pub fn getKey(window: ?*Window, k: keys.Key, action: keys.Action) bool {
@@ -63,12 +68,33 @@ pub fn setFramebufferSizeCallback(window: ?*Window, cb: FrameBufferCallback) voi
     _ = c.glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 }
 
-pub inline fn getTime() f32 {
-    return @floatCast(c.glfwGetTime());
-}
-
 fn frameBufferSizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.c) void {
     frameBufferCallback(window, width, height);
+}
+
+pub const MouseCallback = fn (?*Window, f32, f32) void;
+
+var mouse_callback: *const MouseCallback = undefined;
+
+pub fn cursorPosCallback(window: ?*Window, x: f64, y: f64) callconv(.c) void {
+    mouse_callback(window, @floatCast(x), @floatCast(y));
+}
+
+pub fn setMouseCallback(window: ?*Window, cb: MouseCallback) void {
+    mouse_callback = cb;
+    _ = c.glfwSetCursorPosCallback(window, cursorPosCallback);
+}
+
+pub const ScrollCallback = fn (?*Window, f32, f32) void;
+var scroll_callback: *const ScrollCallback = undefined;
+
+pub fn setScrollCallback(window: ?*Window, cb: ScrollCallback) void {
+    scroll_callback = cb;
+    _ = c.glfwSetScrollCallback(window, scrollCallback);
+}
+
+fn scrollCallback(window: ?*Window, offset_x: f64, offset_y: f64) callconv(.c) void {
+    scroll_callback(window, @floatCast(offset_x), @floatCast(offset_y));
 }
 
 pub const ErrorCallback = fn (desc: []const u8) void;

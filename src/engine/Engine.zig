@@ -4,6 +4,7 @@ const gl = @import("gl");
 const glfw = @import("glfw.zig");
 const c = @import("c.zig").c;
 const keys = @import("keys.zig");
+const Mouse = @import("Mouse.zig");
 
 const log = std.log.scoped(.engine);
 const Engine = @This();
@@ -16,8 +17,11 @@ pub const EngineError = error{
 
 pub const Error = err.GLFWError || EngineError;
 
-lastTime: f32 = 0,
-deltaTime: f32 = 0,
+mouse: Mouse = .init,
+
+last_time: f32 = 0,
+delta_time: f32 = 0,
+delta_time_vec: @Vector(4, f32) = @splat(0),
 
 procs: gl.ProcTable = undefined,
 window: *glfw.Window = undefined,
@@ -38,6 +42,8 @@ pub fn createWindow(self: *Engine, opts: CreateWindowOptions) Error!void {
 
     c.glfwSetWindowUserPointer(self.window, self);
     glfw.setFramebufferSizeCallback(self.window, framebufferSizeCallback);
+    glfw.setMouseCallback(self.window, mouseCallback);
+    glfw.setScrollCallback(self.window, scrollCallback);
 
     if (!self.procs.init(c.glfwGetProcAddress)) {
         return EngineError.UnknownError;
@@ -60,7 +66,7 @@ pub fn keyReleased(self: *Engine, k: keys.Key) bool {
 }
 
 pub fn start(self: *Engine) void {
-    self.lastTime = self.getTime();
+    self.last_time = self.getTime();
 }
 
 pub fn run(self: *Engine) bool {
@@ -71,11 +77,13 @@ pub fn startFrame(self: *Engine) void {
     c.glfwPollEvents();
 
     const now = self.getTime();
-    self.deltaTime = now - self.lastTime;
-    self.lastTime = now;
+    self.delta_time = now - self.last_time;
+    self.delta_time_vec = @splat(self.delta_time);
+    self.last_time = now;
 }
 
 pub fn endFrame(self: *Engine) void {
+    self.mouse.clearOffset();
     c.glfwSwapBuffers(self.window);
 }
 
@@ -86,6 +94,16 @@ pub inline fn getTime(_: *Engine) f32 {
 fn framebufferSizeCallback(_: ?*glfw.Window, width: i32, height: i32) void {
     // const eng: *Engine = @ptrCast(@alignCast(c.glfwGetWindowUserPointer(window)));
     gl.Viewport(0, 0, width, height);
+}
+
+fn mouseCallback(window: ?*glfw.Window, x: f32, y: f32) void {
+    const eng: *Engine = @ptrCast(@alignCast(c.glfwGetWindowUserPointer(window)));
+    eng.mouse.update(x, y);
+}
+
+fn scrollCallback(window: ?*glfw.Window, offset_x: f32, offset_y: f32) void {
+    const eng: *Engine = @ptrCast(@alignCast(c.glfwGetWindowUserPointer(window)));
+    eng.mouse.scroll.update(offset_x, offset_y);
 }
 
 fn errorCallback(desc: []const u8) void {

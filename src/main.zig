@@ -7,7 +7,8 @@ const v = verts.verts;
 const Vertex = verts.Vertex;
 const cubes = verts.cubes;
 
-const math = @import("zmath");
+const glm = @import("zmath");
+const math = std.math;
 
 // const Vertex = extern struct {
 //     pos: [3]f32,
@@ -49,29 +50,6 @@ pub fn main() !void {
     };
 
     defer eng.terminate();
-
-    // const v = [_]Vertex{
-    //     .{
-    //         .pos = .{ 0.5, 0.5, 0.0 },
-    //         .color = .{ 0, 0, 1 },
-    //         .tex = .{ 1, 1 },
-    //     },
-    //     .{
-    //         .pos = .{ 0.5, -0.5, 0.0 },
-    //         .color = .{ 0, 1, 0 },
-    //         .tex = .{ 1, 0 },
-    //     },
-    //     .{
-    //         .pos = .{ -0.5, -0.5, 0.0 },
-    //         .color = .{ 1, 0, 1 },
-    //         .tex = .{ 0, 0 },
-    //     },
-    //     .{
-    //         .pos = .{ -0.5, 0.5, 0.0 },
-    //         .color = .{ 1, 1, 0 },
-    //         .tex = .{ 0, 1 },
-    //     },
-    // };
 
     var attribs = [_]engine.Shader.VertexAttribute{
         .{
@@ -172,68 +150,36 @@ pub fn main() !void {
         // null,
     );
 
-    var camera_pos = math.Vec{ 0, 0, 3, 0 };
-    const camera_front = math.Vec{ 0, 0, -1, 0 };
-    // const camera_target = math.Vec{ 0, 0, 0, 0 };
-    // const camera_direction = math.normalize3(camera_pos - camera_target);
-    const up = math.Vec{ 0, 1, 0, 0 };
-    // const camera_right = math.normalize3(math.cross3(up, camera_direction));
-    // const camera_up = math.cross(camera_direction, camera_right);
-    // const view = math.lookAtRh(camera_pos, camera_target, up);
-
-    const projection = math.perspectiveFovRhGl(
-        std.math.degreesToRadians(45),
-        @as(f32, @floatFromInt(WIDTH)) / @as(f32, @floatFromInt(HEIGHT)),
-        0.1,
-        100,
-    );
+    var camera: engine.Camera = .init;
+    camera.speed = 2.5;
+    camera.pos = .{ 0, 0, 3, 0 };
 
     try shader.load();
     defer shader.deinit();
 
-    // const camera_speed = math.f32x4s(0.0005);
-
     eng.start();
+    camera.look_at = cubes[0];
+
     while (eng.run()) {
         eng.startFrame();
-        gl.ClearColor(0.2, 0.3, 0.3, 1);
-        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        const camera_speed = math.f32x4s(2.5 * eng.deltaTime);
 
         if (eng.keyPressed(.esc)) {
             break;
         }
 
-        if (eng.keyPressed(.w)) {
-            camera_pos += camera_speed * camera_front;
-        }
+        // gl.ClearColor(0.2, 0.3, 0.3, 1);
+        gl.ClearColor(0, 0, 0, 0);
+        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if (eng.keyPressed(.s)) {
-            camera_pos -= camera_speed * camera_front;
-        }
-
-        if (eng.keyPressed(.a)) {
-            camera_pos -= math.normalize3(math.cross3(camera_front, up)) * camera_speed;
-        }
-
-        if (eng.keyPressed(.d)) {
-            camera_pos += math.normalize3(math.cross3(camera_front, up)) * camera_speed;
-        }
-
-        const view = math.lookAtRh(
-            camera_pos,
-            camera_pos + camera_front,
-            up,
-        );
+        camera.update(&eng);
 
         shader.use();
         shader.set4f("ourColor", [4]f32{ 0, 1, 1, 0 });
         shader.setInt("texture1", 0);
         shader.setInt("texture2", 1);
 
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
+        shader.setMat4("view", camera.view);
+        shader.setMat4("projection", camera.projection);
 
         gl.ActiveTexture(engine.Texture.active(0));
         wall_texture.bind();
@@ -243,16 +189,16 @@ pub fn main() !void {
 
         shader.vao.bind();
         for (cubes, 0..) |cube, i| {
-            var model = math.mul(math.identity(), math.translationV(cube));
+            var model = glm.mul(glm.identity(), glm.translationV(cube));
             const angle: f32 = @as(f32, @floatFromInt(i)) * 20;
 
-            const q = math.quatToMat(
-                math.quatFromAxisAngle(
-                    math.Vec{ 1, 0.3, 0.5, 0 },
+            const q = glm.quatToMat(
+                glm.quatFromAxisAngle(
+                    glm.Vec{ 1, 0.3, 0.5, 0 },
                     std.math.degreesToRadians(angle),
                 ),
             );
-            model = math.mul(q, model);
+            model = glm.mul(q, model);
 
             shader.setMat4("model", model);
             gl.DrawArrays(gl.TRIANGLES, 0, 36);
