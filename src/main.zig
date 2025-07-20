@@ -114,10 +114,18 @@ pub fn main() !void {
         "model",
         "view",
         "projection",
-        "objectColor",
-        "lightColor",
-        "lightPos",
+
         "viewPos",
+
+        "material.ambient",
+        "material.diffuse",
+        "material.specular",
+        "material.shininess",
+
+        "light.position",
+        "light.ambient",
+        "light.diffuse",
+        "light.specular",
     };
 
     var shader = engine.Shader.init(
@@ -157,17 +165,14 @@ pub fn main() !void {
     defer light_shader.deinit();
 
     var camera: engine.Camera = .init;
-    camera.speed = 2.5;
+    camera.speed = 5;
     camera.pos = .{ 1, 2, 5, 0 };
 
     eng.start();
     camera.look_at = @splat(0);
 
-    const color: @Vector(4, f32) = .{ 1, 0.5, 0.31, 1 };
-    // const color: @Vector(4, f32) = .{ 1, 1, 1, 1 };
-    var light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
-
-    var light_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
+    const light: @Vector(4, f32) = .{ 1, 1, 0.5, 1 };
+    const light_pos: @Vector(4, f32) = .{ 2, 1, 0, 0 };
 
     while (eng.run()) {
         eng.startFrame();
@@ -179,19 +184,27 @@ pub fn main() !void {
         gl.ClearColor(0, 0, 0, 0);
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        light[0] = (1 + @sin(eng.last_time)) / 2;
-        light_pos[0] = (2 * @sin(eng.last_time)) * 2;
-        light_pos[2] = 2 * @cos(eng.last_time) * 2;
+        // light[0] = (1 + @sin(eng.last_time)) / 2;
+        // light_pos[0] = (2 * @sin(eng.last_time)) * 2;
+        // light_pos[2] = 2 * @cos(eng.last_time) * 2;
 
         camera.update(&eng);
 
         shader.use();
-        shader.setVec3("objectColor", color);
-        shader.setVec3("lightColor", light);
-        shader.setVec3("lightPos", light_pos);
+        // shader.setVec3("objectColor", color);
         shader.setVec3("viewPos", camera.pos);
         shader.setMat4("view", camera.view);
         shader.setMat4("projection", camera.projection);
+
+        shader.setVec3("material.ambient", .{ 1, 0.5, 0.31, 0 });
+        shader.setVec3("material.diffuse", .{ 1, 0.5, 0.31, 0 });
+        shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5, 0 });
+        shader.setFloat("material.shininess", 32);
+
+        shader.setVec3("light.position", light_pos);
+        shader.setVec3("light.ambient", light * glm.f32x4s(0.2));
+        shader.setVec3("light.diffuse", light * glm.f32x4s(0.5));
+        shader.setVec3("light.specular", @splat(1));
 
         var model = glm.identity();
         shader.setMat4("model", model);

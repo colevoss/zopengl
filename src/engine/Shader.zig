@@ -102,13 +102,19 @@ pub fn delete(self: *Shader) void {
     gl.DeleteProgram(self.program_id);
 }
 
-pub fn setInt(self: *Shader, uniform: []const u8, i: i32) void {
+pub fn setInt(self: *const Shader, uniform: []const u8, i: i32) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.Uniform1i(id, i);
     }
 }
 
-pub fn setVec3(self: *Shader, uniform: []const u8, vec: math.Vec) void {
+pub fn setFloat(self: *const Shader, uniform: []const u8, f: f32) void {
+    if (self.uniform_ids.get(uniform)) |id| {
+        gl.Uniform1f(id, f);
+    }
+}
+
+pub fn setVec3(self: *const Shader, uniform: []const u8, vec: math.Vec) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.Uniform3fv(
             id,
@@ -118,7 +124,7 @@ pub fn setVec3(self: *Shader, uniform: []const u8, vec: math.Vec) void {
     }
 }
 
-pub fn set4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
+pub fn set4f(self: *const Shader, uniform: []const u8, values: [4]f32) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.Uniform4f(
             id,
@@ -130,7 +136,7 @@ pub fn set4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
     }
 }
 
-pub fn setMat4(self: *Shader, uniform: []const u8, mat: math.Mat) void {
+pub fn setMat4(self: *const Shader, uniform: []const u8, mat: math.Mat) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.UniformMatrix4fv(
             id,
