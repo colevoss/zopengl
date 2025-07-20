@@ -51,7 +51,7 @@ pub fn update(self: *Camera, eng: *Engine) void {
     self.direction[2] = @sin(math.degreesToRadians(y)) * @cos(math.degreesToRadians(p));
     self.forward = glm.normalize3(self.direction);
 
-    self.fov = math.clamp(self.fov - eng.mouse.scroll.offsetY(), 1, 45);
+    self.fov = math.clamp(self.fov - eng.mouse.scroll.offsetY(), 1, 100);
     self.projection = glm.perspectiveFovRhGl(
         math.degreesToRadians(self.fov),
         ratio,
@@ -68,6 +68,14 @@ pub fn update(self: *Camera, eng: *Engine) void {
 
     if (eng.keyPressed(.s)) {
         self.pos -= camera_speed * self.forward;
+    }
+
+    if (eng.keyPressed(.q)) {
+        self.pos[1] -= self.speed * eng.delta_time;
+    }
+
+    if (eng.keyPressed(.e)) {
+        self.pos[1] += self.speed * eng.delta_time;
     }
 
     if (eng.keyPressed(.a)) {

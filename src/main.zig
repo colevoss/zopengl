@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const gl = @import("gl");
 const engine = @import("engine");
-const verts = @import("verts.zig");
+const verts = @import("light_verts.zig");
 const v = verts.verts;
 const Vertex = verts.Vertex;
 const cubes = verts.cubes;
@@ -10,23 +10,13 @@ const cubes = verts.cubes;
 const glm = @import("zmath");
 const math = std.math;
 
-// const Vertex = extern struct {
-//     pos: [3]f32,
-//     color: [3]f32,
-//     tex: [2]f32,
-// };
 const WIDTH = 800;
 const HEIGHT = 600;
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
 pub fn main() !void {
-    // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    // var gpa: std.heap.DebugAllocator(.{}) = .init;
-    // const allocator = gpa.allocator();
-
     const allocator, const is_debug = gpa: {
-        // if (native_os == .wasi) break :gpa .{ std.heap.wasm_allocator, false };
         break :gpa switch (builtin.mode) {
             .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
             .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
@@ -36,7 +26,6 @@ pub fn main() !void {
     defer if (is_debug) {
         _ = debug_allocator.deinit();
     };
-    // defer _ = gpa.deinit();
 
     var eng: engine.Engine = .{};
 
@@ -59,6 +48,13 @@ pub fn main() !void {
             .stride = @sizeOf(Vertex),
             .offset = @offsetOf(Vertex, "pos"),
         },
+        .{
+            .name = "aNormal",
+            .type = .float,
+            .size = @typeInfo(@FieldType(Vertex, "normals")).array.len,
+            .stride = @sizeOf(Vertex),
+            .offset = @offsetOf(Vertex, "normals"),
+        },
         // .{
         //     .name = "aColor",
         //     .type = .Float,
@@ -66,29 +62,14 @@ pub fn main() !void {
         //     .stride = @sizeOf(Vertex),
         //     .offset = @offsetOf(Vertex, "color"),
         // },
-        .{
-            .name = "aTex",
-            .type = .float,
-            .size = @typeInfo(@FieldType(Vertex, "tex")).array.len,
-            .stride = @sizeOf(Vertex),
-            .offset = @offsetOf(Vertex, "tex"),
-        },
+        // .{
+        //     .name = "aTex",
+        //     .type = .float,
+        //     .size = @typeInfo(@FieldType(Vertex, "tex")).array.len,
+        //     .stride = @sizeOf(Vertex),
+        //     .offset = @offsetOf(Vertex, "tex"),
+        // },
     };
-
-    // std.debug.print("{any}\n", .{attribs});
-
-    // const vertices = [_]f32{
-    //     -0.5, -0.5, 0.0,
-    //     0.5,  -0.5, 0.0,
-    //     0.0,  0.5,  0.0,
-    // };
-
-    // const vertices = [_]f32{
-    //     0.5, 0.5, 0.0, // top right
-    //     0.5, -0.5, 0.0, // bottom right
-    //     -0.5, -0.5, 0.0, // bottom let
-    //     -0.5, 0.5, 0.0, // top let
-    // };
 
     const indices = [_]u32{
         0, 1, 3,
@@ -106,59 +87,87 @@ pub fn main() !void {
         .attributes = &attribs,
         .vbo = .{
             .type = .array,
-            // .size = @sizeOf(@TypeOf(vertices)),
             .size = @sizeOf(@TypeOf(v)),
-            // .data = &vertices,
             .data = &v,
             .usage = .static_draw,
         },
         .ebo = &ebo,
     };
 
-    var wall_texture = engine.Texture.init(allocator, .{
-        .path = "./resources/wall.jpg",
-        .type = .texture_2d,
-        .format = .rgb,
-    });
-    try wall_texture.load();
-    defer wall_texture.delete();
-
-    var face_texture = engine.Texture.init(allocator, .{
-        .path = "./resources/awesomeface.png",
-        .type = .texture_2d,
-        .format = .rgba,
-    });
-    try face_texture.load();
-    defer face_texture.delete();
+    // var wall_texture = engine.Texture.init(allocator, .{
+    //     .path = "./resources/wall.jpg",
+    //     .type = .texture_2d,
+    //     .format = .rgb,
+    // });
+    // try wall_texture.load();
+    // defer wall_texture.delete();
+    //
+    // var face_texture = engine.Texture.init(allocator, .{
+    //     .path = "./resources/awesomeface.png",
+    //     .type = .texture_2d,
+    //     .format = .rgba,
+    // });
+    // try face_texture.load();
+    // defer face_texture.delete();
 
     var uniforms = [_][]const u8{
-        "texture1",
-        "texture2",
         "model",
         "view",
         "projection",
+        "objectColor",
+        "lightColor",
+        "lightPos",
+        "viewPos",
     };
 
     var shader = engine.Shader.init(
         allocator,
         .{
-            .vertexPath = "./resources/test_vertex.glsl",
-            .fragmentPath = "./resources/test_fragment.glsl",
+            // .vertexPath = "./resources/test_vertex.glsl",
+            // .fragmentPath = "./resources/test_fragment.glsl",
+            .vertexPath = "./resources/light_vertex.glsl",
+            .fragmentPath = "./resources/light_fragment.glsl",
         },
         vao,
         &uniforms,
         // null,
     );
 
-    var camera: engine.Camera = .init;
-    camera.speed = 2.5;
-    camera.pos = .{ 0, 0, 3, 0 };
-
     try shader.load();
     defer shader.deinit();
 
+    var light_uniforms = [_][]const u8{
+        "model",
+        "view",
+        "projection",
+        "lightColor",
+    };
+
+    var light_shader = engine.Shader.init(
+        allocator,
+        .{
+            .vertexPath = "./resources/light_vertex.glsl",
+            .fragmentPath = "./resources/light_source_fragment.glsl",
+        },
+        vao,
+        &light_uniforms,
+    );
+
+    try light_shader.load();
+    defer light_shader.deinit();
+
+    var camera: engine.Camera = .init;
+    camera.speed = 2.5;
+    camera.pos = .{ 1, 2, 5, 0 };
+
     eng.start();
-    camera.look_at = cubes[0];
+    camera.look_at = @splat(0);
+
+    const color: @Vector(4, f32) = .{ 1, 0.5, 0.31, 1 };
+    // const color: @Vector(4, f32) = .{ 1, 1, 1, 1 };
+    var light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
+
+    var light_pos: @Vector(4, f32) = .{ 0, 0, 0, 0 };
 
     while (eng.run()) {
         eng.startFrame();
@@ -167,44 +176,39 @@ pub fn main() !void {
             break;
         }
 
-        // gl.ClearColor(0.2, 0.3, 0.3, 1);
         gl.ClearColor(0, 0, 0, 0);
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        light[0] = (1 + @sin(eng.last_time)) / 2;
+        light_pos[0] = (2 * @sin(eng.last_time)) * 2;
+        light_pos[2] = 2 * @cos(eng.last_time) * 2;
 
         camera.update(&eng);
 
         shader.use();
-        shader.set4f("ourColor", [4]f32{ 0, 1, 1, 0 });
-        shader.setInt("texture1", 0);
-        shader.setInt("texture2", 1);
-
+        shader.setVec3("objectColor", color);
+        shader.setVec3("lightColor", light);
+        shader.setVec3("lightPos", light_pos);
+        shader.setVec3("viewPos", camera.pos);
         shader.setMat4("view", camera.view);
         shader.setMat4("projection", camera.projection);
 
-        gl.ActiveTexture(engine.Texture.active(0));
-        wall_texture.bind();
-
-        gl.ActiveTexture(engine.Texture.active(1));
-        face_texture.bind();
+        var model = glm.identity();
+        shader.setMat4("model", model);
 
         shader.vao.bind();
-        for (cubes, 0..) |cube, i| {
-            var model = glm.mul(glm.identity(), glm.translationV(cube));
-            const angle: f32 = @as(f32, @floatFromInt(i)) * 20;
+        gl.DrawArrays(gl.TRIANGLES, 0, 36);
 
-            const q = glm.quatToMat(
-                glm.quatFromAxisAngle(
-                    glm.Vec{ 1, 0.3, 0.5, 0 },
-                    std.math.degreesToRadians(angle),
-                ),
-            );
-            model = glm.mul(q, model);
+        light_shader.use();
+        light_shader.setMat4("view", camera.view);
+        light_shader.setMat4("projection", camera.projection);
 
-            shader.setMat4("model", model);
-            gl.DrawArrays(gl.TRIANGLES, 0, 36);
-        }
-        // gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
-        // gl.DrawArrays(gl.TRIANGLES, 0, 36);
+        light_shader.setVec3("lightColor", light);
+        model = glm.mul(model, glm.scalingV(@splat(0.2)));
+        model = glm.mul(model, glm.translationV(light_pos));
+
+        light_shader.setMat4("model", model);
+        gl.DrawArrays(gl.TRIANGLES, 0, 36);
 
         eng.endFrame();
     }

@@ -108,6 +108,16 @@ pub fn setInt(self: *Shader, uniform: []const u8, i: i32) void {
     }
 }
 
+pub fn setVec3(self: *Shader, uniform: []const u8, vec: math.Vec) void {
+    if (self.uniform_ids.get(uniform)) |id| {
+        gl.Uniform3fv(
+            id,
+            1,
+            math.arr3Ptr(&vec),
+        );
+    }
+}
+
 pub fn set4f(self: *Shader, uniform: []const u8, values: [4]f32) void {
     if (self.uniform_ids.get(uniform)) |id| {
         gl.Uniform4f(
