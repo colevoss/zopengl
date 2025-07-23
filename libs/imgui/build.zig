@@ -17,9 +17,7 @@ pub fn build(b: *Build, target: Build.ResolvedTarget, optimize: std.builtin.Opti
     module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui.cpp"), .flags = &.{""} });
     module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui_internal.cpp"), .flags = &.{""} });
 
-    // module.addCSourceFile(.{ .file = b.path("include/imgui/backends/dcimgui_impl_glfw.cpp"), .flags = &.{""} });
-    // module.addCSourceFile(.{ .file = b.path("include/imgui/backends/dcimgui_impl_opengl3.cpp"), .flags = &.{""} });
-
+    // GLFW/OpenGL Backend
     module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_impl_glfw.cpp"), .flags = &.{""} });
     module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_impl_opengl3.cpp"), .flags = &.{""} });
 
