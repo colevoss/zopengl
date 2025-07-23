@@ -22,8 +22,6 @@ ypr: @Vector(4, f32),
 
 look_at: @Vector(4, f32),
 
-const ratio = @as(f32, @floatFromInt(800)) / @as(f32, @floatFromInt(600));
-
 pub const init: Camera = .{
     .fov = 45,
     .pos = @splat(0),
@@ -41,7 +39,12 @@ pub const init: Camera = .{
 
 pub fn update(self: *Camera, eng: *Engine) void {
     const camera_speed = eng.delta_time_vec * @as(@Vector(4, f32), @splat(self.speed));
-    self.ypr += eng.mouse.scaleOffset(0.05);
+
+    const clicked = eng.mouseButton(.mouse_button_1, .pressed);
+
+    if (clicked) {
+        self.ypr += eng.mouse.scaleOffset(0.05);
+    }
 
     const y = self.ypr[0];
     const p = self.ypr[1];
@@ -54,10 +57,16 @@ pub fn update(self: *Camera, eng: *Engine) void {
     self.fov = math.clamp(self.fov - eng.mouse.scroll.offsetY(), 1, 100);
     self.projection = glm.perspectiveFovRhGl(
         math.degreesToRadians(self.fov),
-        ratio,
+        eng.window.ratio(),
         0.1,
         100,
     );
+
+    const right_clicked = eng.mouseButton(.mouse_button_2, .pressed);
+
+    if (right_clicked) {
+        self.pos -= eng.mouse.scaleOffset(0.005);
+    }
 
     self.right = glm.normalize3(glm.cross3(self.forward, world_up));
     self.up = glm.normalize3(glm.cross3(self.direction, self.right));
@@ -87,7 +96,6 @@ pub fn update(self: *Camera, eng: *Engine) void {
     }
 
     self.look_at = self.pos + self.forward;
-    // self.view = glm.lookAtRh(self.pos, self.pos + self.forward, world_up);
     self.view = glm.lookAtRh(self.pos, self.look_at, world_up);
 }
 

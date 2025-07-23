@@ -6,12 +6,16 @@ const verts = @import("light_map_verts.zig");
 const v = verts.verts;
 const Vertex = verts.Vertex;
 const cubes = verts.cubes;
+const imgui = @import("imgui").c;
 
 const glm = @import("zmath");
 const math = std.math;
 
-const WIDTH = 800;
-const HEIGHT = 600;
+const WIDTH: f32 = 1800;
+const HEIGHT: f32 = WIDTH / 1.77777;
+
+// 16 / 9  = 1.7777
+// 800
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
@@ -27,18 +31,22 @@ pub fn main() !void {
         _ = debug_allocator.deinit();
     };
 
-    var eng: engine.Engine = .{};
-
-    eng.init(.{
-        .width = WIDTH,
-        .height = HEIGHT,
+    var eng: engine.Engine = .{
         .title = "ZiGL",
-    }) catch |e| {
+        .window = .{
+            .height = HEIGHT,
+            .width = WIDTH,
+        },
+    };
+
+    eng.init() catch |e| {
         std.debug.print("Error initializing engine: {s}\n", .{@errorName(e)});
         return;
     };
-
     defer eng.terminate();
+
+    eng.initUI();
+    defer eng.terminateUI();
 
     var attribs = [_]engine.Shader.VertexAttribute{
         .{
@@ -211,18 +219,48 @@ pub fn main() !void {
     eng.start();
     camera.look_at = @splat(0);
 
-    const light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
+    var light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
     const light_pos: @Vector(4, f32) = .{ 1.2, 1, 2, 0 };
+
+    // const label = "hello";
+    // var value: i32 = 0;
+    var counter: f32 = 0;
+    var t = [_]bool{true};
 
     while (eng.run()) {
         eng.startFrame();
+        eng.startUIFrame();
+        var arena = std.heap.ArenaAllocator.init(allocator);
+        defer arena.deinit();
+
+        gl.ClearColor(0, 0, 0, 0);
+        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        _ = imgui.ImGui_Begin(
+            "New Window",
+            &t,
+            0,
+            // imgui.ImGuiWindowFlags_NoBackground | imgui.ImGuiWindowFlags_NoDecoration,
+        );
+
+        _ = imgui.ImGui_ColorPicker4("Color", @ptrCast(&light), 0, null);
+
+        if (imgui.ImGui_Button("Hello")) {
+            counter += 1;
+            std.debug.print("Hello {} \n", .{t[0]});
+            std.debug.print("Hello!\n", .{});
+        }
+
+        const str = try std.fmt.allocPrint(arena.allocator(), "Hello: {d}", .{counter});
+        // const str = try std.fmt.allocPrint(allocator, "Hello: {d}", .{counter});
+        // defer allocator.free(str);
+        imgui.ImGui_Text(str.ptr);
+        imgui.ImGui_Text("BALLS");
+        imgui.ImGui_End();
 
         if (eng.keyPressed(.esc)) {
             break;
         }
-
-        gl.ClearColor(0, 0, 0, 0);
-        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // light[0] = (1 + @sin(eng.last_time)) / 2;
         // light_pos[0] = (2 * @sin(eng.last_time)) * 2;
@@ -275,6 +313,7 @@ pub fn main() !void {
         light_shader.setMat4("model", model);
         gl.DrawArrays(gl.TRIANGLES, 0, 36);
 
+        eng.endUIFrame();
         eng.endFrame();
     }
 

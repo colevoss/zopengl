@@ -81,6 +81,17 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addImport("zmath", zmath.module("root"));
 
+    const cimgui = @import("libs/imgui/build.zig").build(b, target, optimize);
+
+    engine.root_module.addImport("imgui", cimgui);
+    engine.linkLibC();
+    exe.linkLibCpp();
+
+    exe.root_module.addImport("imgui", cimgui);
+
+    exe.linkLibC();
+    exe.linkLibCpp();
+
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).

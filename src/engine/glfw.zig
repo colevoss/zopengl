@@ -43,7 +43,7 @@ pub fn createWindow(opts: CreateWindowOptions) err.GLFWError!?*Window {
     if (window) |w| {
         try makeContextCurrent(w);
         c.glfwSwapInterval(0);
-        c.glfwSetInputMode(w, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
+        // c.glfwSetInputMode(w, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
         return w;
     }
 
@@ -53,6 +53,10 @@ pub fn createWindow(opts: CreateWindowOptions) err.GLFWError!?*Window {
 
 pub inline fn getTime() f32 {
     return @floatCast(c.glfwGetTime());
+}
+
+pub fn getMouseButton(window: ?*Window, b: keys.MouseButton, action: keys.Action) bool {
+    return c.glfwGetMouseButton(window, b.glfw()) == action.glfw();
 }
 
 pub fn getKey(window: ?*Window, k: keys.Key, action: keys.Action) bool {

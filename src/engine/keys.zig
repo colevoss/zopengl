@@ -253,6 +253,38 @@ pub const Key = enum(i32) {
     }
 };
 
+pub const MouseButton = enum {
+    mouse_button_1, //   0
+    mouse_button_2, //   1
+    mouse_button_3, //   2
+    mouse_button_4, //   3
+    mouse_button_5, //   4
+    mouse_button_6, //   5
+    mouse_button_7, //   6
+    mouse_button_8, //   7
+    mouse_button_last, //   GLFW_MOUSE_BUTTON_8
+    mouse_button_left, //   GLFW_MOUSE_BUTTON_1
+    mouse_button_right, //   GLFW_MOUSE_BUTTON_2
+    mouse_button_middle, //   GLFW_MOUSE_BUTTON_3
+
+    pub inline fn glfw(self: MouseButton) c_int {
+        return switch (self) {
+            .mouse_button_1 => c.GLFW_MOUSE_BUTTON_1, //   0
+            .mouse_button_2 => c.GLFW_MOUSE_BUTTON_2, //   1
+            .mouse_button_3 => c.GLFW_MOUSE_BUTTON_3, //   2
+            .mouse_button_4 => c.GLFW_MOUSE_BUTTON_4, //   3
+            .mouse_button_5 => c.GLFW_MOUSE_BUTTON_5, //   4
+            .mouse_button_6 => c.GLFW_MOUSE_BUTTON_6, //   5
+            .mouse_button_7 => c.GLFW_MOUSE_BUTTON_7, //   6
+            .mouse_button_8 => c.GLFW_MOUSE_BUTTON_8, //   7
+            .mouse_button_last => c.GLFW_MOUSE_BUTTON_LAST, //   GLFW_MOUSE_BUTTON_8
+            .mouse_button_left => c.GLFW_MOUSE_BUTTON_LEFT, //   GLFW_MOUSE_BUTTON_1
+            .mouse_button_right => c.GLFW_MOUSE_BUTTON_RIGHT, //   GLFW_MOUSE_BUTTON_2
+            .mouse_button_middle => c.GLFW_MOUSE_BUTTON_MIDDLE, //   GLFW_MOUSE_BUTTON_3
+        };
+    }
+};
+
 pub const Action = enum {
     pressed,
     released,
