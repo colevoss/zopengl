@@ -8,23 +8,23 @@ pub fn build(b: *Build, target: Build.ResolvedTarget, optimize: std.builtin.Opti
         .optimize = optimize,
     });
 
-    module.addIncludePath(.{ .cwd_relative = "include/imgui" });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_widgets.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_tables.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_draw.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_demo.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/dcimgui.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/dcimgui_internal.cpp"), .flags = &.{""} });
+    module.addIncludePath(.{ .cwd_relative = "libs/imgui/include" });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_widgets.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_tables.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_draw.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_demo.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui_internal.cpp"), .flags = &.{""} });
 
     // module.addCSourceFile(.{ .file = b.path("include/imgui/backends/dcimgui_impl_glfw.cpp"), .flags = &.{""} });
     // module.addCSourceFile(.{ .file = b.path("include/imgui/backends/dcimgui_impl_opengl3.cpp"), .flags = &.{""} });
 
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_impl_glfw.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/imgui_impl_opengl3.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_impl_glfw.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/imgui_impl_opengl3.cpp"), .flags = &.{""} });
 
-    module.addCSourceFile(.{ .file = b.path("include/imgui/dcimgui_impl_glfw.cpp"), .flags = &.{""} });
-    module.addCSourceFile(.{ .file = b.path("include/imgui/dcimgui_impl_opengl3.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui_impl_glfw.cpp"), .flags = &.{""} });
+    module.addCSourceFile(.{ .file = b.path("libs/imgui/include/dcimgui_impl_opengl3.cpp"), .flags = &.{""} });
 
     return module;
 }
