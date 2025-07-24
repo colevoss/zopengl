@@ -158,11 +158,15 @@ pub fn main() !void {
         "material.shininess",
         "material.emission",
 
-        // "light.position",
-        "light.direction",
+        "light.position",
+        // "light.direction",
         "light.ambient",
         "light.diffuse",
         "light.specular",
+
+        "light.constant",
+        "light.linear",
+        "light.quadratic",
     };
 
     var shader = engine.Shader.init(
@@ -237,7 +241,8 @@ pub fn main() !void {
         var arena = std.heap.ArenaAllocator.init(allocator);
         defer arena.deinit();
 
-        gl.ClearColor(0, 0, 0, 0);
+        gl.ClearColor(0.1, 0.1, 0.1, 0.1);
+        // gl.ClearColor(0, 0, 0, 0);
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         _ = imgui.ImGui_Begin(
@@ -297,8 +302,11 @@ pub fn main() !void {
         shader.setInt("material.emission", 2); // need to tell it which texture to sample i think
         shader.setFloat("material.shininess", 64);
 
-        // shader.setVec3("light.position", light_pos);
-        shader.setVec3("light.direction", .{ -0.2, -1, -0.3, 0 });
+        shader.setVec3("light.position", light_pos);
+        shader.setFloat("light.constant", 1);
+        shader.setFloat("light.linear", 0.09);
+        shader.setFloat("light.quadratic", 0.032);
+        // shader.setVec3("light.direction", .{ -0.2, -1, -0.3, 0 });
         // shader.setVec3("light.ambient", light * glm.f32x4s(0.2));
         shader.setVec3("light.ambient", glm.f32x4s(0.2));
         // shader.setVec3("light.diffuse", light * glm.f32x4s(0.5));
