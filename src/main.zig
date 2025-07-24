@@ -159,7 +159,9 @@ pub fn main() !void {
         "material.emission",
 
         "light.position",
-        // "light.direction",
+        "light.direction",
+        "light.cutOff",
+        "light.outerCutOff",
         "light.ambient",
         "light.diffuse",
         "light.specular",
@@ -302,16 +304,20 @@ pub fn main() !void {
         shader.setInt("material.emission", 2); // need to tell it which texture to sample i think
         shader.setFloat("material.shininess", 64);
 
-        shader.setVec3("light.position", light_pos);
+        shader.setVec3("light.position", camera.pos);
+        shader.setVec3("light.direction", camera.forward);
+        shader.setFloat("light.cutOff", @cos(math.degreesToRadians(12.5)));
+        shader.setFloat("light.outerCutOff", @cos(math.degreesToRadians(17.5)));
+
         shader.setFloat("light.constant", 1);
         shader.setFloat("light.linear", 0.09);
         shader.setFloat("light.quadratic", 0.032);
         // shader.setVec3("light.direction", .{ -0.2, -1, -0.3, 0 });
         // shader.setVec3("light.ambient", light * glm.f32x4s(0.2));
-        shader.setVec3("light.ambient", glm.f32x4s(0.2));
+        shader.setVec3("light.ambient", glm.f32x4s(0.1));
         // shader.setVec3("light.diffuse", light * glm.f32x4s(0.5));
         // shader.setVec3("light.diffuse", glm.f32x4s(0.5));
-        shader.setVec3("light.diffuse", light);
+        shader.setVec3("light.diffuse", light * glm.f32x4s(0.8));
         shader.setVec3("light.specular", @splat(1));
 
         shader.vao.bind();
