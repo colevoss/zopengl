@@ -95,8 +95,13 @@ pub fn update(self: *Camera, eng: *Engine) void {
         self.pos += self.right * camera_speed;
     }
 
-    self.look_at = self.pos + self.forward;
-    self.view = glm.lookAtRh(self.pos, self.look_at, world_up);
+    self.lookAt(self.pos + self.forward);
+    // self.calculateView();
+}
+
+pub fn lookAt(self: *Camera, vec: @Vector(4, f32)) void {
+    self.look_at = vec;
+    self.calculateView();
 }
 
 pub fn yaw(self: *const Camera) f32 {
@@ -105,4 +110,8 @@ pub fn yaw(self: *const Camera) f32 {
 
 pub fn pitch(self: *const Camera) f32 {
     return self.ypr[1];
+}
+
+fn calculateView(self: *Camera) void {
+    self.view = glm.lookAtRh(self.pos, self.look_at, world_up);
 }
