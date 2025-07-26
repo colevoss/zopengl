@@ -34,6 +34,7 @@ pub fn build(b: *std.Build) void {
     });
 
     engine_mod.linkSystemLibrary("glfw", .{});
+    engine_mod.linkSystemLibrary("assimp", .{});
 
     const gl_bindings = zigglgen.generateBindingsModule(b, .{
         .api = .gl,
