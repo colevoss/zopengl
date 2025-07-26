@@ -39,7 +39,6 @@ pub const init: Camera = .{
 
 pub fn update(self: *Camera, eng: *Engine) void {
     const camera_speed = eng.delta_time_vec * @as(@Vector(4, f32), @splat(self.speed));
-
     const clicked = eng.mouseButton(.mouse_button_1, .pressed);
 
     if (clicked) {

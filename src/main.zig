@@ -5,7 +5,9 @@ const engine = @import("engine");
 const verts = @import("light_map_verts.zig");
 const v = verts.verts;
 const Vertex = verts.Vertex;
-const cubes = @import("verts.zig").cubes;
+const cubes_and_lights = @import("verts.zig");
+const cubes = cubes_and_lights.cubes;
+const lights = cubes_and_lights.lights;
 const imgui = @import("imgui").c;
 
 const glm = @import("zmath");
@@ -16,6 +18,10 @@ const HEIGHT: f32 = WIDTH / 1.77777;
 
 // 16 / 9  = 1.7777
 // 800
+
+fn indexedUniformName(arena: std.mem.Allocator, uniform: []const u8, index: usize, prop: []const u8) ![]const u8 {
+    return try std.fmt.allocPrint(arena, "{s}[{d}].{s}", .{ uniform, index, prop });
+}
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
@@ -145,43 +151,13 @@ pub fn main() !void {
     try box_emission_texture.load();
     defer box_emission_texture.delete();
 
-    var uniforms = [_][]const u8{
-        "model",
-        "view",
-        "projection",
-
-        "viewPos",
-
-        // "material.ambient",
-        // "material.diffuse",
-        "material.specular",
-        "material.shininess",
-        "material.emission",
-
-        "light.position",
-        "light.direction",
-        "light.cutOff",
-        "light.outerCutOff",
-        "light.ambient",
-        "light.diffuse",
-        "light.specular",
-
-        "light.constant",
-        "light.linear",
-        "light.quadratic",
-    };
-
     var shader = engine.Shader.init(
         allocator,
         .{
-            // .vertexPath = "./resources/test_vertex.glsl",
-            // .fragmentPath = "./resources/test_fragment.glsl",
-            .vertexPath = "./resources/shaders/light_map_vertex.glsl",
-            .fragmentPath = "./resources/shaders/light_map_fragment.glsl",
+            .vertexPath = "./resources/shaders/lit-object/vert.glsl",
+            .fragmentPath = "./resources/shaders/lit-object/frag.glsl",
         },
         vao,
-        &uniforms,
-        // null,
     );
 
     try shader.load();
@@ -199,13 +175,6 @@ pub fn main() !void {
         // .ebo = &ebo,
     };
 
-    var light_uniforms = [_][]const u8{
-        "model",
-        "view",
-        "projection",
-        "lightColor",
-    };
-
     var light_shader = engine.Shader.init(
         allocator,
         .{
@@ -213,7 +182,6 @@ pub fn main() !void {
             .fragmentPath = "./resources/shaders/light_source_fragment.glsl",
         },
         light_vao,
-        &light_uniforms,
     );
 
     try light_shader.load();
@@ -226,8 +194,10 @@ pub fn main() !void {
     eng.start();
     camera.look_at = @splat(0);
 
-    var light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
-    const light_pos: @Vector(4, f32) = .{ 1.2, 1, 2, 0 };
+    var light: @Vector(4, f32) = .{ 0, 1, 1, 1 };
+    var point_light: @Vector(4, f32) = .{ 1, 1, 1, 1 };
+    // var light: @Vector(4, f32) = @splat(0);
+    // const light_pos: @Vector(4, f32) = .{ 1.2, 1, 2, 0 };
 
     // const label = "hello";
     // var value: i32 = 0;
@@ -235,6 +205,11 @@ pub fn main() !void {
     var t = [_]bool{true};
 
     // camera.lookAt(@splat(1));
+
+    shader.use();
+    shader.setSampler2d("material.diffuse", 0); // need to tell it which texture to sample i think
+    shader.setSampler2d("material.specular", 1); // need to tell it which texture to sample i think
+    shader.setFloat("material.shininess", 64);
 
     while (eng.run()) {
         eng.startFrame();
@@ -244,7 +219,6 @@ pub fn main() !void {
         defer arena.deinit();
 
         gl.ClearColor(0.1, 0.1, 0.1, 0.1);
-        // gl.ClearColor(0, 0, 0, 0);
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         _ = imgui.ImGui_Begin(
@@ -255,6 +229,7 @@ pub fn main() !void {
         );
 
         _ = imgui.ImGui_ColorPicker4("Color", @ptrCast(&light), 0, null);
+        _ = imgui.ImGui_ColorPicker4("Point Light", @ptrCast(&point_light), 0, null);
 
         if (imgui.ImGui_Button("Hello")) {
             counter += 1;
@@ -263,8 +238,6 @@ pub fn main() !void {
         }
 
         const str = try std.fmt.allocPrint(arena.allocator(), "Hello: {d}", .{counter});
-        // const str = try std.fmt.allocPrint(allocator, "Hello: {d}", .{counter});
-        // defer allocator.free(str);
         imgui.ImGui_Text(str.ptr);
         imgui.ImGui_Text("BALLS");
         imgui.ImGui_End();
@@ -272,10 +245,6 @@ pub fn main() !void {
         if (eng.keyPressed(.esc)) {
             break;
         }
-
-        // light[0] = (1 + @sin(eng.last_time)) / 2;
-        // light_pos[0] = (2 * @sin(eng.last_time)) * 2;
-        // light_pos[2] = 2 * @cos(eng.last_time) * 2;
 
         camera.update(&eng);
         // camera.lookAt(@splat(0));
@@ -288,37 +257,28 @@ pub fn main() !void {
         gl.ActiveTexture(engine.Texture.active(1));
         box_specular_texture.bind();
 
-        gl.ActiveTexture(engine.Texture.active(2));
-        box_emission_texture.bind();
+        // gl.ActiveTexture(engine.Texture.active(2));
+        // box_emission_texture.bind();
 
         // shader.setVec3("objectColor", color);
         shader.setVec3("viewPos", camera.pos);
         shader.setMat4("view", camera.view);
         shader.setMat4("projection", camera.projection);
 
-        // shader.setVec3("material.ambient", .{ 1, 0.5, 0.31, 0 });
-        // shader.setVec3("material.diffuse", .{ 1, 0.5, 0.31, 0 });
-        // shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5, 0 });
-        shader.setInt("material.difuse", 0); // need to tell it which texture to sample i think
-        shader.setInt("material.specular", 1); // need to tell it which texture to sample i think
-        shader.setInt("material.emission", 2); // need to tell it which texture to sample i think
-        shader.setFloat("material.shininess", 64);
+        shader.setVec3("dirLight.direction", .{ -0.2, -1, -0.3, 0 });
+        shader.setVec3("dirLight.ambient", glm.f32x4s(0.2));
+        shader.setVec3("dirLight.diffuse", light * glm.f32x4s(1));
+        shader.setVec3("dirLight.specular", @splat(1));
 
-        shader.setVec3("light.position", camera.pos);
-        shader.setVec3("light.direction", camera.forward);
-        shader.setFloat("light.cutOff", @cos(math.degreesToRadians(12.5)));
-        shader.setFloat("light.outerCutOff", @cos(math.degreesToRadians(17.5)));
-
-        shader.setFloat("light.constant", 1);
-        shader.setFloat("light.linear", 0.09);
-        shader.setFloat("light.quadratic", 0.032);
-        // shader.setVec3("light.direction", .{ -0.2, -1, -0.3, 0 });
-        // shader.setVec3("light.ambient", light * glm.f32x4s(0.2));
-        shader.setVec3("light.ambient", glm.f32x4s(0.1));
-        // shader.setVec3("light.diffuse", light * glm.f32x4s(0.5));
-        // shader.setVec3("light.diffuse", glm.f32x4s(0.5));
-        shader.setVec3("light.diffuse", light * glm.f32x4s(0.8));
-        shader.setVec3("light.specular", @splat(1));
+        for (lights, 0..) |l, i| {
+            shader.setVec3(try indexedUniformName(arena.allocator(), "pointLights", i, "position"), l);
+            shader.setFloat(try indexedUniformName(arena.allocator(), "pointLights", i, "constant"), 1);
+            shader.setFloat(try indexedUniformName(arena.allocator(), "pointLights", i, "linear"), 0.09);
+            shader.setFloat(try indexedUniformName(arena.allocator(), "pointLights", i, "quadratic"), 0.032);
+            shader.setVec3(try indexedUniformName(arena.allocator(), "pointLights", i, "ambient"), glm.f32x4s(0.1));
+            shader.setVec3(try indexedUniformName(arena.allocator(), "pointLights", i, "diffuse"), point_light * glm.f32x4s(0.8));
+            shader.setVec3(try indexedUniformName(arena.allocator(), "pointLights", i, "specular"), @splat(1));
+        }
 
         shader.vao.bind();
         for (cubes, 0..) |cube, i| {
@@ -340,11 +300,14 @@ pub fn main() !void {
         light_shader.setMat4("projection", camera.projection);
 
         light_shader.setVec3("lightColor", light);
-        var light_model = glm.mul(glm.identity(), glm.scalingV(@splat(0.2)));
-        light_model = glm.mul(light_model, glm.translationV(light_pos));
 
-        light_shader.setMat4("model", light_model);
-        gl.DrawArrays(gl.TRIANGLES, 0, 36);
+        for (lights) |l| {
+            var light_model = glm.mul(glm.identity(), glm.scalingV(@splat(0.2)));
+            light_model = glm.mul(light_model, glm.translationV(l));
+
+            light_shader.setMat4("model", light_model);
+            gl.DrawArrays(gl.TRIANGLES, 0, 36);
+        }
 
         eng.endUIFrame();
         eng.endFrame();
