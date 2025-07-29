@@ -3,6 +3,8 @@ const c = @import("c.zig").c;
 const err = @import("error.zig");
 const keys = @import("keys.zig");
 
+const log = std.log.scoped(.glfw);
+
 pub const Window = c.GLFWwindow;
 
 pub fn init() err.GLFWError!void {

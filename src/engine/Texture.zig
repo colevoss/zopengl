@@ -6,40 +6,19 @@ const Allocator = std.mem.Allocator;
 const Texture = @This();
 
 id: u32 = undefined,
-allocator: Allocator,
-opts: Opts,
+path: []const u8,
+type: Type,
+target: Target,
 
-pub const Opts = struct {
-    path: []const u8,
-    type: Target,
-    format: Format,
-    s_wrap: Wrapping = .repeat,
-    t_wrap: Wrapping = .repeat,
-
-    min_filter: Filtering = .lienar_mip_map_linear,
-    mag_filter: Filtering = .linear,
-};
-
-pub fn init(allocator: Allocator, opts: Opts) Texture {
-    var texture: Texture = .{
-        .allocator = allocator,
-        .opts = opts,
-    };
-
-    texture.gen();
-
-    return texture;
-}
-
-fn gen(self: *Texture) void {
+pub fn init(self: *Texture) void {
     gl.GenTextures(1, (&self.id)[0..1]);
 }
 
-pub fn bind(self: *Texture) void {
-    gl.BindTexture(self.opts.type.glType(), self.id);
+pub fn bind(self: *const Texture) void {
+    gl.BindTexture(self.target.glType(), self.id);
 }
 
-pub fn load(self: *Texture) !void {
+pub fn load(self: *Texture, allocator: Allocator) !void {
     self.bind();
     const tex_type = self.opts.type.glType();
 
@@ -51,20 +30,23 @@ pub fn load(self: *Texture) !void {
     var file = try std.fs.cwd().openFile(self.opts.path, .{});
     defer file.close();
 
-    var image = try zimg.Image.fromFile(self.allocator, &file);
+    var image = try zimg.Image.fromFile(allocator, &file);
     try image.flipVertically();
 
     defer image.deinit();
+
+    const format = Format.fromImage(&image).glType();
 
     // TODO: Load image
     gl.TexImage2D(
         tex_type,
         0,
-        gl.RGB,
+        @intCast(format),
         @intCast(image.width),
         @intCast(image.height),
         0, // always be 0.
-        self.opts.format.glType(),
+        // self.opts.format.glType(),
+        format,
         gl.UNSIGNED_BYTE,
         image.rawBytes().ptr,
     );
@@ -73,9 +55,12 @@ pub fn load(self: *Texture) !void {
 
 pub fn delete(self: *Texture) void {
     gl.DeleteTextures(1, (&self.id)[0..1]); // TODO: Is this right?
-
-    errdefer self.delete();
 }
+
+pub const Type = enum {
+    diffuse,
+    specular,
+};
 
 pub const Target = enum {
     texture_2d,
@@ -202,6 +187,14 @@ pub const Format = enum {
             .stencil_index => gl.STENCIL_INDEX,
             .depth_component => gl.DEPTH_COMPONENT,
             .depth_stencil => gl.DEPTH_STENCIL,
+        };
+    }
+
+    pub fn fromImage(image: *zimg.Image) Format {
+        return switch (image.pixelFormat()) {
+            .rgb332, .rgb555, .rgb565, .rgb24, .rgb48 => .rgb,
+            .rgba32, .rgba64 => .rgba,
+            else => unreachable,
         };
     }
 };

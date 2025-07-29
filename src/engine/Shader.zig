@@ -91,8 +91,8 @@ pub fn load(self: *Shader) !void {
         return e;
     };
 
-    self.vao.init();
-    try self.vao.load(aa, self.program_id);
+    // self.vao.init();
+    // try self.vao.load(aa, self.program_id);
     try self.loadUniformData(aa);
 }
 
@@ -144,6 +144,16 @@ pub fn setSampler2d(self: *const Shader, uniform: []const u8, sampler: i32) void
     if (self.uniform_ids.get(uniform)) |u| {
         assert(u.type == .sampler_2d);
         gl.Uniform1i(u.id, sampler);
+        // } else unreachable;
+    } else {
+        // log.debug("could not find uniform {s}", .{uniform});
+    }
+}
+
+pub fn setUint(self: *const Shader, uniform: []const u8, i: u32) void {
+    if (self.uniform_ids.get(uniform)) |u| {
+        assert(u.type == .int);
+        gl.Uniform1ui(u.id, i);
     } else unreachable;
 }
 

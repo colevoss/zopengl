@@ -6,6 +6,7 @@ const c = @import("c.zig").c;
 const keys = @import("keys.zig");
 const Mouse = @import("Mouse.zig");
 const imgui = @import("imgui").c;
+const TextureLoader = @import("TextureLoader.zig");
 
 const log = std.log.scoped(.engine);
 const Engine = @This();
@@ -41,6 +42,7 @@ title: []const u8,
 glfw_window: *glfw.Window = undefined,
 
 imgui_context: *imgui.ImGuiContext = undefined,
+texture_loader: TextureLoader,
 
 pub fn init(self: *Engine) Error!void {
     try glfw.init();
@@ -169,7 +171,9 @@ fn errorCallback(desc: []const u8) void {
     log.err("GLFW Err: {s}", .{desc});
 }
 
-pub fn terminate(_: *Engine) void {
+pub fn terminate(self: *Engine) void {
+    // TODO: move this to a deinit
+    self.texture_loader.deinit();
     glfw.terminate();
 }
 

@@ -23,7 +23,7 @@ ypr: @Vector(4, f32),
 look_at: @Vector(4, f32),
 
 pub const init: Camera = .{
-    .fov = 45,
+    .fov = 90,
     .pos = @splat(0),
     .forward = .{ 0, 0, -1, 0 },
     .right = @splat(0),

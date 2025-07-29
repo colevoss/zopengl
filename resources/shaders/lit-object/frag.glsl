@@ -3,7 +3,7 @@
 struct Material {
   sampler2D diffuse;
   sampler2D specular;
-  sampler2D emission;
+  // sampler2D emission;
 
   // vec3 specular;
   float shininess;
@@ -40,6 +40,7 @@ uniform Material material;
 uniform DirLight dirLight;
 
 #define NR_POINT_LIGHTS 4
+uniform int numLights;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
@@ -51,9 +52,9 @@ void main()
   vec3 viewDir = normalize(viewPos - FragPos);
 
   vec3 result = CalcDirLight(dirLight, norm, viewDir);
-  vec3 scratch;
 
-  for (int i = 0; i < NR_POINT_LIGHTS; i++) {
+  // for (int i = 0; i < NR_POINT_LIGHTS; i++) {
+  for (int i = 0; i < numLights; i++) {
     result += CalcPointLights(pointLights[i], norm, FragPos, viewDir);
   }
 
